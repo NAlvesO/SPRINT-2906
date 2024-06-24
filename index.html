@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Store</title>
+</head>
+<body>
+    <h1>Food Store:</h1>
+    
+    <form id="userForm">
+        <input type="hidden" id="userId" />
+        <label for="name">Produto: </label>
+        <input type="text" id="name" required>
+        <label for="Quantidade">Quantidade:</label>
+        <input type="number" id="Quantidade" required>
+        <label for="preco">Preço (R$):</label>
+        <input type="text" id="preco" name="preco" pattern="^\d+(,\d{2})?$" required>
+        <button type="submit">Salvar</button>
+    </form>
+    
+    <ul id="userList"></ul>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const userForm = document.getElementById('userForm');
+            const userList = document.getElementById('userList');
+            const userIdField = document.getElementById('userId');
+            const nameField = document.getElementById('name');
+            const quantidadeField = document.getElementById('Quantidade');
+            const precoField = document.getElementById('preco');
+            
+            userForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                
+                const userId = userIdField.value;
+                const name = nameField.value;
+                const quantidade = quantidadeField.value;
+                const preco = precoField.value;
+                
+                if (userId) {
+                    updateUser(userId, name, quantidade, preco);
+                } else {
+                    createUser(name, quantidade, preco);
+                }
+                
+                userForm.reset();
+                userIdField.value = '';
+                renderUserList();
+            });
+            
+            function createUser(name, quantidade, preco) {
+                const users = getUsers();
+                const newUser = {
+                    id: Date.now().toString(),
+                    name: name,
+                    quantidade: quantidade,
+                    preco: preco
+                };
+                users.push(newUser);
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+            
+            function getUsers() {
+                return JSON.parse(localStorage.getItem('users')) || [];
+            }
+            
+            function updateUser(id, name, quantidade, preco) {
+                const users = getUsers();
+                const index = users.findIndex(user => user.id === id);
+                if (index !== -1) {
+                    users[index].name = name;
+                    users[index].quantidade = quantidade;
+                    users[index].preco = preco;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+            
+            function deleteUser(id) {
+                const users = getUsers();
+                const filteredUsers = users.filter(user => user.id !== id);
+                localStorage.setItem('users', JSON.stringify(filteredUsers));
+                renderUserList();
+            }
+            
+            function renderUserList() {
+                const users = getUsers();
+                userList.innerHTML = '';
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${user.name} - Quantidade: ${user.quantidade} - Preço: R$${user.preco}
+                        <button onclick="editUser('${user.id}')">Edit</button>
+                        <button onclick="deleteUser('${user.id}')">Delete</button>
+                    `;
+                    userList.appendChild(li);
+                });
+            }
+            
+            window.editUser = function(id) {
+                const users = getUsers();
+                const user = users.find(user => user.id === id);
+                if (user) {
+                    userIdField.value = user.id;
+                    nameField.value = user.name;
+                    quantidadeField.value = user.quantidade;
+                    precoField.value = user.preco;
+                }
+            }
+            
+            window.deleteUser = deleteUser;
+            
+            renderUserList();
+        });
+    </script>
+</body>
+</html>
